@@ -159,5 +159,5 @@ markdown_extensions:
 # Page tree
 nav:
   - Home: index.md
-  - Getting started:
-    - Installation: getting-started.md
+  - Monitorring:
+    - Prometheus: prom/getting-started.md
