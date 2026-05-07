@@ -161,3 +161,6 @@ nav:
   - Home: index.md
   - Monitorring:
     - Prometheus: prom/getting-started.md
+  - Vue3:
+      - vue3/installation.md
+      - vue3/getting-started.md
