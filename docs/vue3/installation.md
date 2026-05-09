@@ -34,6 +34,18 @@ npm i -g yrm
 yrm use taobao
 ```
 
+## 安装VueRouter
+
+```shell
+npm install vue-router@4.3.0 --save
+```
+
+## 安装 pinia
+
+```shell
+npm install pinia@2.1.7 --save
+```
+
 
 ## Vscode插件
 

@@ -853,3 +853,1264 @@ Vue 默认会将数据中的 HTML 标签当作纯文本处理，以防止跨站�
     <style scoped>
     </style>
     ```
+
+## 自定义组件
+
+### 定义属性defineProps
+
+将父组件的变量传递给子组件
+
+=== "components/ChildCom.vue"
+
+    ```vue
+    <template>
+       <div>我是子组件</div>
+       <!-- 使用数组 -->
+       <!-- username 由调用者指定也就是父组件
+       <p>用户名：{{ props.username }}</p> -->
+
+       <!-- 使用对象 -->
+
+       <p>用户名：{{ props.username }}</p>
+       <p>性别: {{ props.gender }}</p>
+       <p>身高：{{ props.body.height }}</p>
+       <p>体重: {{ props.body.weight }}</p>
+    </template>
+
+    <script setup>
+    import { defineProps } from 'vue';
+
+    // 使用数组指定属性的名称
+    // const props = defineProps(["username"])
+
+    // 使用对象指定属性
+    const props = defineProps({
+        username: String,
+        gender: {
+            type: String,
+            default: "男"
+        },
+        body: {
+            height: Number,
+            weight: Number
+        }
+    })
+    </script>
+
+
+    <style scoped>
+
+    </style>
+    ```
+
+=== "components/ParentCom.vue"
+
+    ```vue
+    <template>
+        <div>我是父组件</div>
+        <hr>
+        <ChildCom :username="name" :body="body"/>
+    </template>
+
+    <script setup>
+    import { reactive, ref } from 'vue';
+    import ChildCom from './ChildCom.vue';
+
+    const name = ref("张三")
+    const body = reactive({height: 180, weight: 80})
+
+    </script>
+
+    <style lang="scss" scoped>
+
+    </style>
+    ```
+
+=== "App.vue"
+
+    ```vue
+    <script setup>
+    import ParentCom from './components/ParentCom.vue';
+    </script>
+
+    <template>
+        <ParentCom />
+    </template>
+
+    <style scoped>
+    </style>
+    ```
+
+### 定义事件defineEmits
+
+通过定义事件将子组件的值传递给父组件
+
+=== "components/ChildCom.vue"
+
+    ```vue
+    <template>
+       <div>我是子组件</div>
+       <p>步数 {{ steps }}</p>
+       <button @click="updateSteps">走路</button>
+    </template>
+
+    <script setup>
+    import { ref } from 'vue';
+
+    const steps = ref(0)
+
+    // ✅ 推荐写法1：使用数组语法
+    const emit = defineEmits(['walk'])
+
+    // ✅ 推荐写法2：使用对象语法（支持事件验证）
+    // const emit = defineEmits({
+    //     walk: (steps) => {
+    //         if (typeof steps !== 'number') {
+    //             console.warn('walk 事件参数必须是数字')
+    //             return false
+    //         }
+    //         return true
+    //     }
+    // })
+
+    const updateSteps = () => {
+        steps.value += 10
+        emit("walk", steps.value)
+    }
+    </script>
+    ```
+
+=== "components/ParentCom.vue"
+
+    ```vue
+    <template>
+        <div>我是父组件</div>
+        <hr>
+        <ChildCom @walk="personWalk"></ChildCom>
+    </template>
+
+    <script setup>
+    import ChildCom from './ChildCom.vue';
+
+    const personWalk = (step) => {
+        console.log(`子组件走了 ${step} 步`)  // 输出：子组件走了 10 步、20 步...
+    }
+    </script>
+    ```
+
+=== "App.vue"
+
+    ```vue
+    <script setup>
+    import ParentCom from './components/ParentCom.vue';
+    </script>
+
+    <template>
+        <ParentCom />
+    </template>
+
+    <style scoped>
+    </style>
+    ```
+
+### 双向绑定defineModel
+
+
+=== "components/ChildCom.vue"
+
+    ```vue
+    <template>
+       <div>我是子组件</div>
+       <div>子组件步数: {{ steps }}</div>
+       <button @click="updateSteps">子组件+10</button>
+    </template>
+
+    <script setup>
+    import { defineModel, watch } from 'vue';
+
+    const steps = defineModel()
+
+    watch(steps, (newVal, oldVal) => {
+        console.log(`Child: ${oldVal} → ${newVal}`)
+    })
+
+    const updateSteps = () => {
+        steps.value += 10
+    }
+    </script>
+    ```
+=== "components/ParentCom.vue"
+
+    ```vue
+    <template>
+        <div>我是父组件</div>
+        <div>父组件步数: {{ steps }}</div>
+        <button @click="steps += 5">父组件+5</button>  <!-- 新增 -->
+        <hr>
+        <ChildCom v-model="steps"></ChildCom>
+    </template>
+
+    <script setup>
+    import { ref, watch } from 'vue';
+    import ChildCom from './ChildCom.vue';
+
+    const steps = ref(0)
+
+    watch(steps, (newVal, oldVal) => {
+        console.log(`Parent: ${oldVal} → ${newVal}`)
+    })
+    </script>
+    ```
+
+=== "App.vue"
+
+    ```vue
+    <script setup>
+    import ParentCom from './components/ParentCom.vue';
+    </script>
+
+    <template>
+        <ParentCom />
+    </template>
+
+    <style scoped>
+    </style>
+    ```
+### 插槽Slot
+
+=== "components/ChildCom.vue"
+
+    ```vue
+    <template>
+        <button type="submit">
+            <slot></slot>
+        </button>
+    </template>
+
+    <script setup>
+
+    </script>
+
+    <style  scoped>
+
+    </style>
+    ```
+
+=== "components/ParentCom.vue"
+
+    ```vue
+    <template>
+        <ChildCom>登录</ChildCom>
+    </template>
+
+    <script setup>
+    import ChildCom from './ChildCom.vue';
+
+    </script>
+
+    <style  scoped>
+
+    </style>
+    ```
+
+=== "App.vue"
+
+    ```vue
+    <script setup>
+    import ParentCom from './components/ParentCom.vue';
+    </script>
+
+    <template>
+        <ParentCom />
+    </template>
+
+    <style scoped>
+    </style>
+    ```
+
+### 具名插槽Slot
+
+=== "components/ChildCom.vue"
+
+    ```vue
+    <template>
+        <header>
+            <slot name="header"></slot>
+        </header>
+        <main>
+            <slot name="main"></slot>
+        </main>
+        <footer>
+            <slot name="footer"></slot>
+        </footer>
+        <!-- 默认插槽 -->
+        <slot></slot>
+    </template>
+
+    <script setup>
+
+    </script>
+
+    <style scoped>
+
+    </style>
+    ```
+
+=== "components/ParentCom.vue"
+
+    ```vue
+    <template>
+        <ChildCom>
+
+            <!-- header -->
+            <template #header>
+                这是首部
+            </template>
+            <!--main-->
+            <template #main>
+                这是主体
+            </template>
+            <!--footer-->
+            <template #footer>
+                这是底部
+            </template>
+
+
+            <!-- <template #default>
+                <h1>默认插槽</h1>
+            </template> -->
+           <h1>默认插槽</h1>
+        </ChildCom>
+    </template>
+
+    <script setup>
+    import ChildCom from './ChildCom.vue';
+
+    </script>
+
+    <style  scoped>
+
+    </style>
+    ```
+
+=== "App.vue"
+
+    ```vue
+    <script setup>
+    import ParentCom from './components/ParentCom.vue';
+    </script>
+
+    <template>
+        <ParentCom />
+    </template>
+
+    <style scoped>
+    </style>
+    ```
+
+### 插槽作用域
+
+=== "components/ChildCom.vue"
+
+    ```vue
+    <template>
+        <header>
+            <slot name="header" :person="p1"></slot>
+        </header>
+        <main>
+            <slot name="main" :person="p2"></slot>
+        </main>
+        <footer>
+            <slot name="footer" :person="p3"></slot>
+        </footer>
+        <!-- 默认插槽 -->
+        <slot :person="p4"></slot>
+    </template>
+
+    <script setup>
+    import { ref } from 'vue';
+
+
+    const p1 = ref("张三")
+    const p2 = ref("李四")
+    const p3 = ref("王五")
+    const p4 = ref("赵六")
+    </script>
+
+    <style scoped>
+
+    </style>
+    ```
+
+=== "components/ParentCom.vue"
+
+    ```vue
+    <template>
+        <ChildCom>
+
+            <!-- header -->
+            <template #header="scoped">
+                这是首部 - {{ scoped.person}}
+            </template>
+            <!--main-->
+            <template #main="scoped">
+                这是主体 - {{ scoped.person}}
+            </template>
+            <!--footer-->
+            <template #footer="scoped">
+                这是底部 - {{ scoped.person}}
+            </template>
+
+
+            <template #default="scoped">
+                <h1>默认插槽- {{ scoped.person}}</h1>
+            </template>
+           <!-- <h1>默认插槽</h1> -->
+        </ChildCom>
+    </template>
+
+    <script setup>
+    import ChildCom from './ChildCom.vue';
+
+    </script>
+
+    <style  scoped>
+
+    </style>
+    ```
+=== "App.vue"
+
+    ```vue
+    <script setup>
+    import ParentCom from './components/ParentCom.vue';
+    </script>
+
+    <template>
+        <ParentCom />
+    </template>
+
+    <style scoped>
+    </style>
+    ```
+
+## VueRouter
+
+### 基本使用
+
+
+=== "views/HomeView.vue"
+
+    ```vue
+    <template>
+        <h1>Home</h1>
+    </template>
+
+    <script setup>
+
+    </script>
+
+    <style scoped>
+
+    </style>
+    ```
+
+=== "views/AboutView.vue"
+
+    ```vue
+    <template>
+        <h1>About</h1>
+    </template>
+
+    <script setup>
+
+    </script>
+
+    <style  scoped>
+
+    </style>
+    ```
+
+=== "router/index.js"
+
+    ```js
+    // 定义路由
+    import { createRouter, createWebHistory } from "vue-router";
+    // 直接导入
+    import HomeView from "../views/HomeView.vue"
+    const router = createRouter({
+        history: createWebHistory(import.meta.env.BASE_URL),
+        routes: [
+            {
+                path: "/", name: "home", component: HomeView
+            },
+            {   path: "/home", redirect: "/"},
+            {
+                path: "/about", name: "about", component: ()=> import("../views/AboutView.vue") // 动态导入
+            }
+        ]
+    })
+
+    export default router
+    ```
+
+=== "main.js"
+
+    ```js
+    import { createApp } from 'vue'
+    import './style.css'
+    import App from './App.vue'
+    // 加载路由
+    import  router  from "./router/index.js"
+    const app = createApp(App)
+    // 加载路由
+    app.use(router)
+    app.mount('#app')
+    ```
+
+=== "App.vue"
+
+    ```vue
+    <script setup>
+    import { RouterLink, RouterView } from 'vue-router';
+    </script>
+
+    <template>
+        <header>
+            <div class="wrapper">
+                <nav>
+                    <RouterLink to="/">Home</RouterLink>
+                    <br>
+                    <RouterLink to="/about">About</RouterLink>
+                </nav>
+            </div>
+        </header>
+        <!-- 这里是动态内容 -->
+        <!-- <router-view></router-view> -->
+         <!-- <RouterView></RouterView> -->
+          <RouterView/>
+    </template>
+
+    <style scoped>
+    .wrapper {
+        display: block;
+        margin: 18px;
+    }
+    </style>
+    ```
+
+### 子路由
+
+=== "router/index.js"
+
+    ```js
+    import { createRouter, createWebHistory } from "vue-router";
+
+    import HomeView from "../views/HomeView.vue"
+    const router = createRouter({
+        history: createWebHistory(import.meta.env.BASE_URL),
+        routes: [
+            {
+                path: "/home",
+                name: "home",
+                component: HomeView ,
+                children:[
+                    {
+                        path: "sub1", //不以 / 开头，相对于 /home/sub1
+                        name: "sub1",
+                        component: ()=> import( "../views/Sub1View.vue")
+                    },
+                    {
+                        path: "/home/sub2", // 完整路径
+                        name: "sub2",
+                        component: ()=> import( "../views/Sub2View.vue")
+                    },
+                ]
+            },
+            { path: "/", redirect: "/home" },  // 重定向放在后面也可以
+            { path: "/about", name: "about", component: () => import("../views/AboutView.vue") }
+        ]
+    })
+
+    export default router
+    ```
+
+=== "views/HomeView.vue"
+
+    ```vue
+    <template>
+        <h1>Home</h1>
+        <RouterLink to="/home/sub1">子页面1</RouterLink> &nbsp;
+         <RouterLink :to="{ name: 'sub2' }">子页面2</RouterLink>
+        <hr>
+        <!-- 子路由显示在这里  -->
+        <RouterView />
+    </template>
+
+    <script setup>
+    import { RouterLink } from 'vue-router';
+
+    </script>
+
+    <style scoped>
+
+    </style>
+    ```
+
+=== "views/Sub1View.vue"
+
+    ```vue
+    <template>
+        <p>子页面1</p>
+    </template>
+
+    <script setup>
+
+    </script>
+
+    <style scoped>
+
+    </style>
+    ```
+
+=== "views/Sub2View.vue"
+
+    ```vue
+    <template>
+        <p>子页面2</p>
+    </template>
+
+    <script setup>
+
+    </script>
+
+    <style scoped>
+
+    </style>
+    ```
+
+### 路由传参
+
+
+=== "router/index.js"
+
+    ```js
+    import { createRouter, createWebHistory } from "vue-router";
+
+    import HomeView from "../views/HomeView.vue"
+    const router = createRouter({
+        history: createWebHistory(import.meta.env.BASE_URL),
+        routes: [
+            {
+                path: "/home",
+                name: "home",
+                component: HomeView ,
+                children:[
+                    {
+                        // http://localhost:5173/home/sub1/1
+                        path: "sub1/:pk", //不以 / 开头，相对于 /home/sub1
+                        name: "sub1",
+                        component: ()=> import( "../views/Sub1View.vue")
+                    },
+                    {
+                        path: "/home/sub2",
+                        name: "sub2",
+                        component: ()=> import( "../views/Sub2View.vue")
+                    },
+                ]
+            },
+            { path: "/", redirect: "/home" },  // 重定向放在后面也可以
+            { path: "/about", name: "about", component: () => import("../views/AboutView.vue") }
+        ]
+    })
+
+    export default router
+    ```
+
+=== "views/HomeView.vue"
+
+    ```vue
+    <template>
+        <h1>Home</h1>
+        <!-- 路径参数 (params)  -->
+        <!-- http://localhost:5173/home/sub1/1 -->
+         <RouterLink to="/home/sub1/1">子页面1-1</RouterLink>
+         <RouterLink :to="{ name: 'sub1', params:{pk: 2} }">子页面1-2</RouterLink>
+
+         <!-- 查询参数 (query) -->
+          <!-- http://localhost:5173/home/sub2/?page=1 -->
+         <RouterLink to="/home/sub2/?page=1">子页面2-1</RouterLink>
+         <RouterLink :to="{ name: 'sub2', query:{page: 2} }">子页面2-2</RouterLink>
+        <hr>
+        <!-- 子路由显示在这里  -->
+        <RouterView />
+    </template>
+
+    <script setup>
+    import { RouterLink } from 'vue-router';
+
+    </script>
+
+    <style scoped>
+
+    </style>
+    ```
+
+=== "views/Sub1View.vue"
+
+    ```vue
+    <template>
+        <p>子页面1</p>
+        {{ pk }}
+    </template>
+
+    <script setup>
+    // 获取参数
+    import { onMounted, onUpdated ,computed } from 'vue';
+    import { useRoute } from 'vue-router';
+
+    const route = useRoute()
+
+    onMounted(()=>{
+        const params = route.params
+        console.log(params)
+    })
+    // onMounted 只在组件创建时执行一次，而 onUpdated 会在每次参数变化时执行
+    onUpdated(()=>{
+        const params = route.params
+        console.log(params)
+    })
+
+    // 自动追踪并缓存 route.params.pk
+    const pk = computed(() => route.params.pk)
+    </script>
+
+    <style scoped>
+
+    </style>
+    ```
+
+=== "views/Sub2View.vue"
+
+    ```vue
+    <template>
+        <p>子页面2</p>
+        {{ page }}
+    </template>
+
+    <script setup>
+    import { onMounted, onUpdated ,computed } from 'vue';
+    import { useRoute } from 'vue-router';
+
+    const route = useRoute()
+
+    onMounted(()=>{
+        const query = route.query
+        console.log(query)
+    })
+    // onMounted 只在组件创建时执行一次，而 onUpdated 会在每次参数变化时执行
+    onUpdated(()=>{
+        const query = route.query
+        console.log(query)
+    })
+
+    // 自动追踪并缓存 route.params.pk
+    const page = computed(() => route.query.page)
+
+    </script>
+
+    <style scoped>
+
+    </style>
+    ```
+### 路由导航
+
+=== "router/index.js"
+
+    ```vue
+    import { createRouter, createWebHistory } from "vue-router";
+
+    import HomeView from "../views/HomeView.vue"
+    const router = createRouter({
+        history: createWebHistory(import.meta.env.BASE_URL),
+        routes: [
+            {
+                path: "/home",
+                name: "home",
+                component: HomeView ,
+            },
+            { path: "/", redirect: "/home" },  // 重定向放在后面也可以
+            { path: "/login", name: "login", component: () => import("../views/LoginView.vue") }
+        ]
+    })
+
+    export default router
+    ```
+
+=== "App.vue"
+
+    ```vue
+    <script setup>
+    import { useRouter } from 'vue-router';
+
+    const router = useRouter()
+    const btnLogin = () => {
+        console.log("跳转到登录页面")
+        // push 会添加历史记录
+        // router.push("/login")
+        router.push({ name: "login" })
+    }
+    const btnHome = () => {
+        console.log("跳转到主页面")
+        // replace 会替换当前历史记录
+        // router.replace("/home")
+        router.replace({ name: "home" })
+    }
+    </script>
+
+    <template>
+        <header>
+            <div class="wrapper">
+                <nav>
+                    <RouterLink to="/">Home</RouterLink> |
+                    <RouterLink :to="{name: 'login'}">login</RouterLink>
+                </nav>
+            </div>
+            <button @click="btnLogin">跳转到登录页</button>
+            <button @click="btnHome">跳转到主页</button>
+        </header>
+          <RouterView/>
+    </template>
+
+    <style scoped>
+    .wrapper {
+        display: block;
+        margin: 18px;
+    }
+    </style>
+
+    ```
+
+=== "views/HomeView.vue"
+
+    ```vue
+    <template>
+        <h1>Home</h1>
+    </template>
+
+    <script setup>
+
+    </script>
+
+    <style scoped>
+
+    </style>
+    ```
+=== "views/LoginView.vue"
+
+    ```vue
+    <template>
+        <h1>登录页</h1>
+    </template>
+
+    <script setup>
+
+    </script>
+
+    <style scoped>
+
+    </style>
+    ```
+
+### 路由守卫
+
+=== "router/index.js"
+
+    ```vue
+    import { createRouter, createWebHistory } from "vue-router";
+
+    import HomeView from "../views/HomeView.vue"
+    const router = createRouter({
+        history: createWebHistory(import.meta.env.BASE_URL),
+        routes: [
+            {
+                path: "/home",
+                name: "home",
+                component: HomeView ,
+            },
+            { path: "/", redirect: "/home" },  // 重定向放在后面也可以
+            { path: "/login", name: "login", component: () => import("../views/LoginView.vue") },
+            {
+                path: "/about",
+                name: "about",
+                component: () => import("../views/AboutView.vue") ,
+                // 路由导航守卫
+                beforeEnter: (to, from) => {
+                    console.log("beforeEnter", to, from)
+                    return false
+                }
+            }
+        ]
+    })
+
+    // 全局守卫
+    router.beforeEach((to, from) => {
+        console.log(to.path, from.path)
+        if ( to.path !== "/login" ) {
+            // 如果获取不到token,则返回的登录页
+            const token = localStorage.getItem("token")
+            console.log("token:", token)
+            if (!token) {
+                return "/login"
+            }
+        }
+        return true
+    })
+    export default router
+    ```
+
+=== "views/HomeView.vue"
+
+    ```vue
+    <template>
+        <h1>Home</h1>
+        <button @click="btnLogout">登出</button>
+    </template>
+
+    <script setup>
+
+    import { onBeforeRouteLeave, onBeforeRouteUpdate, useRouter } from 'vue-router';
+
+    const router = useRouter()
+    const btnLogout=()=>{
+        // 模拟登出
+        localStorage.removeItem("token")
+        router.push("login")
+    }
+    // 组件内导航守卫，离开守卫：防止未保存的内容丢失
+    onBeforeRouteLeave((to, from) => {
+        console.log("onBeforeRouteLeave",to, from)
+        const answer = window.confirm("是否确认离开？")
+        if  (!answer) {
+            return false
+        }
+    })
+    // 组件内导航守卫， 更新守卫：当路由参数变化时
+    onBeforeRouteUpdate((to, from)=>{
+        console.log("onBeforeRouteUpdate", to, from)
+    })
+    </script>
+
+    <style scoped>
+
+    </style>
+    ```
+
+=== "views/LoginView.vue"
+
+    ```vue
+    <template>
+        <h1>登录页</h1>
+        <button @click="btnLogin">登录</button>
+    </template>
+
+    <script setup>
+    import { useRouter } from 'vue-router';
+
+    const router = useRouter()
+    const btnLogin=()=>{
+        // 模拟登录
+        localStorage.setItem("token", "helloworld")
+        router.push("/home")
+    }
+    </script>
+
+    <style scoped>
+
+    </style>
+    ```
+
+=== "App.vue"
+
+    ```vue
+    <script setup>
+    import { useRouter } from 'vue-router';
+
+    const router = useRouter()
+    const btnLogin = () => {
+        console.log("跳转到登录页面")
+        // router.push("/login")
+        router.push({ name: "login" })
+    }
+    const btnHome = () => {
+        console.log("跳转到主页面")
+        // router.replace("/home")
+        router.replace({ name: "home" })
+    }
+    </script>
+
+    <template>
+        <header>
+            <div class="wrapper">
+                <nav>
+                    <RouterLink to="/">Home</RouterLink> |
+                    <RouterLink :to="{name: 'login'}">Login</RouterLink> |
+                    <RouterLink :to="{name: 'about'}">About</RouterLink>
+                </nav>
+            </div>
+            <button @click="btnLogin">跳转到登录页</button>
+            <button @click="btnHome">跳转到主页</button>
+        </header>
+          <RouterView/>
+    </template>
+
+    <style scoped>
+    .wrapper {
+        display: block;
+        margin: 18px;
+    }
+    </style>
+    ```
+
+### 路由元信息
+
+=== "router/index.js"
+
+    ```vue
+    import { createRouter, createWebHistory } from "vue-router";
+
+    import HomeView from "../views/HomeView.vue"
+    const router = createRouter({
+        history: createWebHistory(import.meta.env.BASE_URL),
+        routes: [
+            {
+                path: "/home",
+                name: "home",
+                component: HomeView ,
+                // 通过 meta设置 /home 设置为公开的页面了
+                meta: {requireAuth: false}
+            },
+            { path: "/", redirect: "/home" },
+            { path: "/login", name: "login", component: () => import("../views/LoginView.vue") },
+            {
+                path: "/about",
+                name: "about",
+                component: () => import("../views/AboutView.vue") ,
+                meta: {requireAuth: true}
+            }
+        ]
+    })
+
+    // 全局守卫
+    router.beforeEach((to, from) => {
+        console.log(to.path, from.path)
+        if ( to.path !== "/login" && to.meta.requireAuth ==true) {
+            const token = localStorage.getItem("token")
+            console.log("token:", token)
+            if (!token) {
+                return "/login"
+            }
+        }
+        return true
+    })
+    export default router
+    ```
+
+=== "views/HomeView.vue"
+
+    ```vue
+    <template>
+        <h1>Home</h1>
+        <button @click="btnLogout">登出</button>
+    </template>
+
+    <script setup>
+
+    import { onBeforeRouteLeave, onBeforeRouteUpdate, useRouter } from 'vue-router';
+
+    const router = useRouter()
+    const btnLogout=()=>{
+        // 模拟登出
+        localStorage.removeItem("token")
+        router.push("login")
+    }
+    // 组件内导航守卫，离开守卫：防止未保存的内容丢失
+    onBeforeRouteLeave((to, from) => {
+        console.log("onBeforeRouteLeave",to, from)
+        const answer = window.confirm("是否确认离开？")
+        if  (!answer) {
+            return false
+        }
+    })
+    // 组件内导航守卫， 更新守卫：当路由参数变化时
+    onBeforeRouteUpdate((to, from)=>{
+        console.log("onBeforeRouteUpdate", to, from)
+    })
+    </script>
+
+    <style scoped>
+
+    </style>
+    ```
+
+=== "views/LoginView.vue"
+
+    ```vue
+    <template>
+        <h1>登录页</h1>
+        <button @click="btnLogin">登录</button>
+    </template>
+
+    <script setup>
+    import { useRouter } from 'vue-router';
+
+    const router = useRouter()
+    const btnLogin=()=>{
+        // 模拟登录
+        localStorage.setItem("token", "helloworld")
+        router.push("/home")
+    }
+    </script>
+
+    <style scoped>
+
+    </style>
+    ```
+
+=== "App.vue"
+
+    ```vue
+    <script setup>
+    import { useRouter } from 'vue-router';
+
+    const router = useRouter()
+    const btnLogin = () => {
+        console.log("跳转到登录页面")
+        // router.push("/login")
+        router.push({ name: "login" })
+    }
+    const btnHome = () => {
+        console.log("跳转到主页面")
+        // router.replace("/home")
+        router.replace({ name: "home" })
+    }
+    </script>
+
+    <template>
+        <header>
+            <div class="wrapper">
+                <nav>
+                    <RouterLink to="/">Home</RouterLink> |
+                    <RouterLink :to="{name: 'login'}">Login</RouterLink> |
+                    <RouterLink :to="{name: 'about'}">About</RouterLink>
+                </nav>
+            </div>
+            <button @click="btnLogin">跳转到登录页</button>
+            <button @click="btnHome">跳转到主页</button>
+        </header>
+          <RouterView/>
+    </template>
+
+    <style scoped>
+    .wrapper {
+        display: block;
+        margin: 18px;
+    }
+    </style>
+    ```
+## Pinia
+
+=== "main.js"
+
+    ```js
+    import { createApp } from 'vue'
+    import './style.css'
+    import App from './App.vue'
+    // 加载路由
+    import  router  from "./router/index.js"
+    // 导入 Pinia
+    import { createPinia } from 'pinia'
+    const app = createApp(App)
+
+    app.use(router)
+    app.use(createPinia())
+    app.mount('#app')
+    ```
+
+=== "stores/counter.js 组合式"
+
+    ```js
+    import { defineStore } from "pinia";
+    import { computed, ref } from "vue";
+
+    // // 组合式
+    // export const useCounterStore = defineStore("counter", ()=> {
+    //     // setup
+    //     const count = ref(0)
+    //     const game = ref("篮球")
+    //     const doubleCount = computed(()=> count.value*2)
+
+    //     function increment () {
+    //         count.value ++
+    //     }
+
+    //     // 如果使用setup(组合式API),那么必须要return 变量,计算属性和方法，如果不返回则无法在外面是使用
+    //     return { count, doubleCount, increment, game}
+    // })
+
+    // 选项式
+    export const useCounterStore = defineStore("counter", {
+        // state, getters, actions
+        state() {
+            return {
+                count: 0,
+                game: "篮球"
+            }
+        },
+        getters: {
+            doubleCount() {
+                return this.count*2
+            }
+        },
+        actions: {
+            increment(){
+                this.count++
+            }
+        }
+    })
+    ```
+
+=== "views/AboutView.vue"
+
+    ```vue
+    <template>
+        {{ counterStore.count }}
+        {{ counterStore.doubleCount }}
+        {{counterStore.game }}
+        <button @click="updateCount">更新</button>
+    </template>
+
+    <script setup>
+    import { useCounterStore } from '../components/stores/counter';
+
+    const counterStore = useCounterStore()
+
+    const updateCount= () => {
+        // 1. 直接更新
+        // counterStore.count+=1
+        // 2. 批量更新
+        // counterStore.$patch({
+        //     count: counterStore.count+2,
+        //     game: "足球"
+        // })
+        // 3. 通过方法counterStore.increment
+        counterStore.increment()
+    }
+
+    </script>
+
+    <style  scoped>
+
+    </style>
+    ```
+
+
