@@ -431,6 +431,38 @@ Vue 默认会将数据中的 HTML 标签当作纯文本处理，以防止跨站�
     </style>
     ```
 
+=== "components/Syntax.vue 案例2"
+
+    ```VUE
+    <template>
+      <form @submit.prevent="handleSubmit">
+        <input type="text" v-model="form.username" placeholder="用户名" />
+        <input type="password" v-model="form.password" placeholder="密码" />
+        <button type="submit">提交</button>
+      </form>
+      <button @click="getInput">获取Input</button>
+    </template>
+
+    <script setup>
+    import { reactive } from 'vue';
+
+    const form = reactive({
+      username: "",
+      password: ""
+    })
+
+    const getInput = () => {
+      console.log("用户名:", form.username)
+      console.log("密码:", form.password)
+    }
+
+    const handleSubmit = () => {
+      console.log("提交表单:", form)
+    }
+    </script>
+    ```
+
+
 ### javascript
 
 === "components/Syntax.vue"
@@ -569,4 +601,255 @@ Vue 默认会将数据中的 HTML 标签当作纯文本处理，以防止跨站�
 
 ### v-on
 
-### 
+=== "components/Syntax.vue"
+    ```vue
+    <template>
+       <!-- <a href="http://www.baidu.com" v-on:click.prevent="goto360($event)">百度</a> -->
+          <a href="http://www.baidu.com" @click.prevent="goto360($event)">百度</a>
+    </template>
+
+    <script setup>
+    const goto360 = (event) =>{
+       // event.preventDefault()
+       window.location ="https://www.qq.com"
+    }
+    </script>
+
+    <style  scoped>
+
+    </style>
+    ```
+
+### ref属性
+=== "components/Syntax.vue 案例1"
+
+    ```vue
+    <template>
+      <input type="text" ref="usernameref">
+      <button @click="getUsername">获取username</button>
+    </template>
+
+    <script setup>
+    import { ref } from 'vue';
+
+    const usernameref=ref("")
+    const getUsername=() => {
+       console.log(usernameref.value.value)
+    }
+    </script>
+
+    <style  scoped>
+
+    </style>
+    ```
+
+
+## 计算属性
+
+### computed
+
+=== "components/Syntax.vue"
+
+    ```vue
+    <template>
+       <label for="width">长</label>
+       <input type="number" name="width" v-model="width">
+       <label for="height">宽</label>
+       <input type="number" name="height" v-model="height">
+        <label for="height">面积</label>
+       <input type="number" name="area" :value="area" readonly="">
+    </template>
+
+    <script setup>
+    import { computed, ref } from 'vue';
+
+    const width = ref(0)
+    const height = ref(0)
+
+    const area = computed(() => {
+       return width.value*height.value
+    })
+    </script>
+
+    <style scoped>
+
+    </style>
+    ```
+
+## 属性监听
+
+=== "components/Syntax.vue (ref)"
+
+    ```vue
+    <template>
+       <p>width：{{ width }}</p>
+       <div>
+          <p>用户名:{{ person.username }}</p>
+          <p>年龄:{{ person.age }}</p>
+       </div>
+       <button @click="changeWidth">改变</button>
+    </template>
+
+    <script setup>
+    import { ref, watch } from 'vue';
+
+    const width = ref(0)
+    const person = ref({
+       username: "dengyouf",
+       age: 18
+    })
+
+    const changeWidth = () => {
+       width.value++
+       person.value ={"username": "DENGYOUF", "age": 32}
+    }
+
+    // 监听基本数据类型
+    watch(width, (newValue, oldValue)=>{
+       console.log(`new: ${newValue}, old: ${oldValue}`)
+    })
+
+    // 监听整个对象的改变
+    watch(person, (newValue, oldValue)=>{
+       console.log("new person: ", newValue, "_",oldValue)
+    })
+
+    // 监听对象的某个属性改变，采用getter函数形式person.value.username
+    // watch(()=>{return person.value.username},  (newValue, oldValue) =>{})
+    watch(()=> person.value.username, (newValue, oldValue) => {
+       console.log("用户名发生变化", newValue)
+    })
+
+    // 监听对象的所有属性改变，开启深度deep监听
+    watch(person, (newValue, oldValue)=>{
+       console.log("3. new person: ", newValue, "_",oldValue)
+    }, {deep: true})
+
+
+    </script>
+
+    <style  scoped>
+
+    </style>
+    ```
+
+
+=== "components/Syntax.vue (reactive默认开启深度监听)"
+
+    ```vue
+    <template>
+       <div>
+          <p>用户名:{{ person.username }}</p>
+          <p>年龄:{{ person.age }}</p>
+       </div>
+       <button @click="changePerson">改变</button>
+    </template>
+
+    <script setup>
+    import { reactive, watch } from 'vue';
+
+    const person = reactive({
+       username: "dengyouf",
+       age: 18
+    })
+
+    const changePerson = () => {
+       person.username = "HELLO"
+       // 如果需要整体替换，使用 Object.assign
+       // Object.assign(person, {username: "DENGYOUF", age: 34})
+    }
+
+    // ✅ 方式1：监听特定属性的变化
+    watch(() => person.username, (newValue, oldValue) => {
+       console.log("username 变化: ", newValue, "→", oldValue)
+    })
+
+    // ✅ 方式2：监听整个对象（deep 监听）
+    watch(person, (newValue, oldValue) => {
+       console.log("person 对象变化:", {
+          username: newValue.username,
+          age: newValue.age
+       })
+    }, { deep: true })
+
+    // ✅ 方式3：同时监听多个属性
+    watch(
+       [() => person.username, () => person.age],
+       ([newName, newAge], [oldName, oldAge]) => {
+          console.log("多个属性变化:", { newName, newAge }, { oldName, oldAge })
+       }
+    )
+    </script>
+    ```
+
+## 生命周期
+
+=== "components/LifeCycle.vue"
+
+    ```vue
+    <template>
+        {{  count  }}
+        <button @click="updateCount">更新count</button>
+    </template>
+
+    <script setup>
+    import { onBeforeMount, onMounted,onBeforeUpdate, onUpdated, onBeforeUnmount, onUnmounted,  ref } from 'vue';
+
+    const count = ref(0)
+
+    const updateCount = () => {
+        count.value++
+    }
+    // 1. 创建阶段
+    console.log("setup")
+
+    // 2. 挂载阶段
+    onBeforeMount (() => {
+        console.log("before mounted")
+    })
+
+    onMounted(() => {
+        console.log("onmounted")
+    })
+    // 3.更新阶段
+    onBeforeUpdate( () =>{
+        console.log("before update")
+    })
+    onUpdated (() => {
+        console.log("update")
+    })
+
+    // 4.卸载阶段
+    onBeforeUnmount( () => {
+        console.log("before unmounted")
+    })
+    onUnmounted ( () => {
+        console.log("unmounted")
+    })
+    </script>
+
+    <style scoped>
+
+    </style>
+    ```
+=== "App.vue"
+
+    ```vue
+    <script setup>
+    import { ref } from 'vue';
+    import LifeCycle from './components/LifeCycle.vue';
+    const show = ref(true)
+    const togglerHandler =()=>{
+        console.log("toggler")
+        show.value = !show.value
+    }
+    </script>
+
+    <template>
+        <LifeCycle v-if="show"></LifeCycle>
+        <button @click="togglerHandler">toggler</button>
+    </template>
+
+    <style scoped>
+    </style>
+    ```
